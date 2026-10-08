@@ -1,0 +1,22 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-10-01T15:00:00Z"},
+  "lists": "css",
+  "title": "Pixel Burger · Campaña de apertura",
+  "order": ["portada", "oportunidad", "objetivo", "concepto", "ajustes", "mision", "cartel", "donde", "contenido", "byte", "byte-accion", "sello", "cocreacion", "ciclo", "presupuesto", "cronograma", "kpis", "riesgos", "decisiones", "siete-dias"],
+  "sections": {
+    "s1": {"description": "Punto de partida: la situación, la ventana de GTA VI y la meta de la campaña.", "start": "portada"},
+    "s2": {"description": "El concepto CARGANDO y los ajustes a la idea original.", "start": "concepto"},
+    "s3": {"description": "Nivel 1, La Misión: mecánica, cartel, ubicaciones y contenido.", "start": "mision"},
+    "s4": {"description": "Nivel 2, Byte: el personaje y cómo se activa en la calle.", "start": "byte"},
+    "s5": {"description": "Nivel 3, No tenemos imagen: sellos y co-creación con clientes.", "start": "sello"},
+    "s6": {"description": "Ejecución: el ciclo, presupuesto, cronograma y métricas.", "start": "ciclo"},
+    "s7": {"description": "Riesgos, decisiones pendientes y los próximos 7 días.", "start": "riesgos"}
+  },
+  "faces": {
+    "silkscreen": {"family": "Silkscreen", "href": "https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap"},
+    "rubik": {"family": "Rubik", "href": "https://fonts.googleapis.com/css2?family=Rubik:wght@500..900&display=swap"},
+    "dm-sans": {"family": "DM Sans", "href": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400..700&display=swap"}
+  },
+  "designSystems": []
+}

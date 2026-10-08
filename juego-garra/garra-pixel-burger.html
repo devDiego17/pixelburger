@@ -1,0 +1,854 @@
+<title>Garra Pixel Burger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Rubik:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: una columna tipo cabina arcade — marquesina, vidrio (canvas), panel de mando, cajón de premios. Un solo look oscuro a propósito. */
+:root{
+  --night:#15131F;      /* gabinete */
+  --cabinet:#221E33;    /* paneles */
+  --line:#3A3450;
+  --paper:#F5F1E8;      /* texto */
+  --muted:#B9B3C9;
+  --magenta:#FF4F8B;    /* neón */
+  --cheese:#FFC83D;     /* acento cálido */
+  --lettuce:#5BC25B;
+  --red:#E5383B;
+  --display:"Silkscreen","Courier New",monospace;
+  --body:"Rubik",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:var(--paper);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:12px 28px}
+.app{max-width:440px;margin-inline:auto;display:flex;flex-direction:column;gap:12px}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.05}
+.brand b{font-family:var(--display);font-size:20px;letter-spacing:1px;color:var(--cheese)}
+.brand span{font-family:var(--display);font-size:12px;color:var(--magenta);letter-spacing:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--display);font-size:13px;background:var(--cabinet);border:2px solid var(--line);border-radius:6px;padding:4px 8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip em{font-style:normal;color:var(--cheese)}
+.chip.warn em{color:var(--magenta)}
+.iconbtn{font-family:var(--display);font-size:12px;background:transparent;color:var(--muted);border:2px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer}
+.stage{position:relative;border-radius:14px;overflow:hidden;border:3px solid var(--magenta);box-shadow:0 0 0 3px var(--night),0 0 24px rgba(255,79,139,.35)}
+canvas{display:block;width:100%;height:auto;aspect-ratio:360/520;touch-action:none;background:#120F1C}
+.banner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:min(86%,320px);background:rgba(21,19,31,.94);border:3px solid var(--cheese);border-radius:10px;padding:14px 16px;text-align:center;display:flex;flex-direction:column;gap:4px}
+.banner b{font-family:var(--display);font-size:26px;color:var(--cheese);line-height:1.1}
+.banner span{font-size:15px;color:var(--paper)}
+.banner small{font-size:13px;color:var(--muted)}
+.banner.lose{border-color:var(--magenta)}
+.meter{position:absolute;left:50%;bottom:9%;width:min(88%,330px);transform:translateX(-50%)}
+.meter .plate{transform:skewX(-14deg);background:linear-gradient(180deg,#2C2A33,#121117);border:2px solid #4A4656;border-radius:6px;padding:8px 14px 10px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.meter .plate > *{transform:skewX(14deg)}
+.meter .top{display:flex;align-items:baseline;gap:8px;border-bottom:3px solid #4FA3E0;padding-bottom:4px;margin-bottom:8px}
+.meter .top b{font-family:var(--display);font-size:16px;letter-spacing:1px;color:#fff}
+.meter .top span{font-size:12px;color:var(--muted);margin-left:auto}
+.meter .bar{position:relative;height:14px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.6)}
+.meter .bar i{position:absolute;top:-4px;width:4px;height:22px;margin-left:-2px;background:#FFF3A6;box-shadow:0 0 6px #FFF3A6,0 0 0 1px #000}
+.meter .bar em{position:absolute;top:-2px;width:2px;height:18px;margin-left:-1px;background:rgba(255,255,255,.55)}
+.meter.done .bar i{transition:none}
+.meter .verdict{font-family:var(--display);font-size:13px;text-align:center;margin-top:6px;min-height:16px;color:var(--paper)}
+.banner.lose b{color:var(--magenta)}
+.controls{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:10px;align-items:center;background:var(--cabinet);border:2px solid var(--line);border-radius:14px;padding:12px;touch-action:none;user-select:none;-webkit-user-select:none}
+.dir{height:64px;border-radius:12px;border:none;background:#2E2944;color:var(--paper);font-family:var(--display);font-size:26px;cursor:pointer;box-shadow:inset 0 -5px 0 #18152A}
+.dir:active,.dir.on{transform:translateY(2px);box-shadow:inset 0 -2px 0 #18152A;background:#3A3458}
+.dir:disabled{opacity:.35}
+.grab{height:96px;width:96px;justify-self:center;border-radius:50%;border:none;cursor:pointer;background:radial-gradient(circle at 35% 30%,#FF7A7C,var(--red) 55%,#9E1F22);color:#fff;font-family:var(--display);font-size:16px;font-weight:700;line-height:1.05;box-shadow:0 7px 0 #6B1416,0 0 18px rgba(229,56,59,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.grab small{font-size:10px;font-weight:400}
+.grab:active{transform:translateY(4px);box-shadow:0 3px 0 #6B1416}
+.grab:disabled{filter:grayscale(.8) brightness(.7);cursor:default}
+button:focus-visible{outline:3px solid var(--cheese);outline-offset:2px}
+.tabs{display:flex;gap:6px}
+.tab{flex:1;font-family:var(--display);font-size:13px;padding:8px 4px;border-radius:8px;border:2px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--cabinet);color:var(--cheese);border-color:var(--cheese)}
+.panel{background:var(--cabinet);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel h2{font-family:var(--display);font-size:15px;color:var(--cheese);margin:0;letter-spacing:1px}
+.panel p{margin:0;color:var(--muted)}
+.panel p strong{color:var(--paper)}
+.album{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.card{background:var(--night);border:2px solid var(--line);border-radius:10px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0}
+.card canvas{width:56px;height:56px;aspect-ratio:auto;background:transparent;image-rendering:pixelated}
+.card.locked canvas{filter:brightness(0) opacity(.35)}
+.card b{font-size:13px}
+.card span{font-family:var(--display);font-size:11px;color:var(--muted)}
+.card.got{border-color:var(--lettuce)}
+.card.rare.got{border-color:var(--cheese)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--night);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+.stat b{font-family:var(--display);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:var(--body);font-weight:700;font-size:14px;border-radius:8px;padding:9px 12px;cursor:pointer;border:2px solid var(--cheese);background:var(--cheese);color:var(--night)}
+.btn.ghost{background:transparent;color:var(--paper);border-color:var(--line)}
+label.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+select{font-family:var(--body);font-size:14px;background:var(--night);color:var(--paper);border:2px solid var(--line);border-radius:8px;padding:8px}
+ul.rules{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+ul.rules strong{color:var(--paper)}
+.note{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <header class="hud">
+    <div class="brand"><b>PIXEL BURGER</b><span>LA GARRA · PRUEBA</span></div>
+    <div class="chips">
+      <div class="chip" id="chipFichas">Fichas <em id="fichas">5</em></div>
+      <div class="chip" id="chipTime">Tiempo <em id="time">--</em></div>
+      <div class="chip">Álbum <em id="albumCount">0/6</em></div>
+      <button class="iconbtn" id="mute" aria-pressed="false">Sonido sí</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <canvas id="cv" width="360" height="520" aria-label="Máquina de garra con peluches de Pixel Burger"></canvas>
+    <div class="meter" id="meter" hidden aria-live="polite">
+      <div class="plate">
+        <div class="top"><b id="mName">CLÁSICA</b><span>¡Aprieta en lo verde!</span></div>
+        <div class="bar" id="mBar"><em id="mL" style="left:45%"></em><em id="mR" style="left:55%"></em><i id="mMark" style="left:0%"></i></div>
+        <div class="verdict" id="mVerdict"></div>
+      </div>
+    </div>
+    <div class="banner" id="banner" hidden><b id="bTitle"></b><span id="bText"></span><small id="bTip"></small></div>
+  </div>
+
+  <div class="controls">
+    <button class="dir" id="left" aria-label="Mover la garra a la izquierda">◀</button>
+    <button class="grab" id="grab">JUGAR<small>1 ficha</small></button>
+    <button class="dir" id="right" aria-label="Mover la garra a la derecha">▶</button>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="pAlbum" id="tAlbum">Álbum</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="pRules" id="tRules">Cómo jugar</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="pTest" id="tTest">Prueba</button>
+  </div>
+
+  <section class="panel" id="pAlbum" role="tabpanel">
+    <h2>TU ÁLBUM DE PELUCHES</h2>
+    <div class="album" id="album"></div>
+    <p class="note">En esta prueba el premio es coleccionable: el álbum no se canjea por dinero ni cuenta para el ranking de la Misión.</p>
+  </section>
+
+  <section class="panel" id="pRules" role="tabpanel" hidden>
+    <h2>CÓMO SE JUEGA</h2>
+    <ul class="rules">
+      <li><strong>Mete una ficha</strong> con el botón rojo. Cada compra en Pixel Burger da fichas (aquí se simulan).</li>
+      <li><strong>Mueve la garra</strong> con ◀ ▶ (o las flechas del teclado). Tienes solo <strong>10 segundos</strong>.</li>
+      <li><strong>La garra se balancea.</strong> El carro acelera y frena, y la garra queda colgando como un péndulo. Si agarras mientras se mueve, baja donde esté en ese instante: espera el momento justo.</li>
+      <li><strong>Pulsa AGARRAR</strong> (o la barra espaciadora). La garra baja hasta tocar un peluche.</li>
+      <li><strong>¡Aprieta en lo verde!</strong> Aparece una barra con una aguja que va y viene. Toca el botón rojo, la barra espaciadora o la pantalla cuando pase por el verde. Verde: agarre firme. Amarillo: se resbala en el camino. Rojo: no agarra.</li>
+      <li><strong>La zona verde se achica</strong> si la garra quedó descentrada, si el peluche pesa más o si tiene otro encima.</li>
+      <li><strong>Tú decides dónde soltar.</strong> Con el peluche arriba tienes 8 segundos para llevarlo con ◀ ▶ hasta el hueco de SALIDA y pulsar SOLTAR. Ojo: la salida es angosta, el peluche sale disparado con el balanceo y puede rebotar fuera.</li>
+      <li><strong>Es 100% habilidad.</strong> Puntería, el momento en que aprietas y dónde sueltas. No hay azar en el agarre.</li>
+      <li><strong>La hamburguesa dorada</strong> es pequeña y pesada: necesita una puntería casi perfecta.</li>
+    </ul>
+  </section>
+
+  <section class="panel" id="pTest" role="tabpanel" hidden>
+    <h2>PANEL DE PRUEBA</h2>
+    <p>Sirve para medir qué tan difícil es antes de llevarla a clientes. Meta sugerida: entre 25% y 40% de partidas con premio.</p>
+    <div class="stats">
+      <div class="stat"><span>Partidas</span><b id="sPlays">0</b></div>
+      <div class="stat"><span>Premios</span><b id="sWins">0</b></div>
+      <div class="stat"><span>¡Casi! (se resbaló)</span><b id="sSlips">0</b></div>
+      <div class="stat"><span>% con premio</span><b id="sRate">–</b></div>
+    </div>
+    <label class="field" for="diff">Fuerza de la garra
+      <select id="diff">
+        <option value="0">Muy fuerte (muy fácil)</option>
+        <option value="1">Fuerte</option>
+        <option value="2" selected>Normal</option>
+        <option value="3">Débil</option>
+        <option value="4">Muy débil (muy difícil)</option>
+      </select>
+    </label>
+    <div class="row">
+      <button class="btn" id="addFicha">Simular compra (+1 ficha)</button>
+      <button class="btn ghost" id="refill">Rellenar máquina</button>
+      <button class="btn ghost" id="reset">Borrar progreso</button>
+    </div>
+    <p class="note" id="resetNote" hidden>Pulsa «Borrar progreso» otra vez para confirmar.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  // ---------- Geometría (unidades lógicas del canvas) ----------
+  const W = 360, H = 520;
+  const LEFT = 12, RIGHT = 348, FLOOR = 470;
+  const DIV_X1 = 90, DIV_X2 = 100, DIV_TOP = 300; // pared alta: el montón no tapa la salida
+  const RAIL = 44, HOME_X = 51, MIN_X = 51, MAX_X = 322;
+  const FL = 30;               // largo de los dedos
+  const G = 980;               // gravedad
+  const MOVE_SPEED = 125, LOWER_SPEED = 120, RAISE_SPEED = 115, RETURN_SPEED = 150;
+  const ACCEL = 320;           // el carro acelera y frena: no se detiene en seco
+  const SW_K = 10.5, SW_C = 0.8, SW_B = 0.85; // péndulo: rigidez, amortiguación y empuje del carro
+  const TURN_TIME = 10, CARRY_TIME = 8;
+  const BOUNCE = 0.5, BOUNCE_MIN = 120; // rebote fuerte en golpes rápidos; quieto cuando reposa
+  // Barra de agarre (estilo FIFA): media zona verde y segundos que tarda la aguja en cruzar, por nivel de fuerza
+  const GREEN = [0.09, 0.065, 0.05, 0.04, 0.03];
+  const SWEEP = [1.4, 1.2, 1.0, 0.85, 0.7];
+  const GRIP_TIMEOUT = 3.2;
+  let realClock = 0; // segundos reales, sin el tope por cuadro que usa la física
+  const advanceReal = d => { realClock += d; };
+
+  // ---------- Peluches (pixel art 16x16) ----------
+  const PAL = { k:"#15131F", b:"#E8A33D", B:"#C47F22", s:"#FFF1C9", g:"#5BC25B", y:"#FFC83D", m:"#7A4330",
+    r:"#D2384A", R:"#9E2236", w:"#F5F1E8", p:"#FF4F8B", o:"#FFD24A", O:"#C9921A", h:"#E8613A", c:"#FFF6E0" };
+  const CLASICA = [
+    "................","....kkkkkkkk....","..kkbbbbbbbbkk..",".kbbbsbbbbsbbbk.",".kbbbbbbbbbbbbk.",
+    "kbbwkbbbbbbwkbbk","kbbkkbbbbbbkkbbk","kbbbbbbkkbbbbbbk","kggggggggggggggk","kyyyyyyyyyyyyyyk",
+    "kmmmmmmmmmmmmmmk","kmmmmmmmmmmmmmmk","kBbbbbbbbbbbbbBk",".kBbbbbbbbbbbBk.","..kkkkkkkkkkkk..","................"];
+  const MONTANERA = CLASICA.slice(); MONTANERA[9] = "khghhhhhghhhhghk"; MONTANERA[10] = "krrRrrmmmmrrRrrk";
+  const CHEESE = CLASICA.slice(); CHEESE[8] = "kyyyyyyyyyyyyyyk"; CHEESE[10] = "kmymmmymmmmymmmk"; CHEESE[13] = ".kBbbybbbbbybBk.";
+  const CHORIZO = ["................","................","................","...kkkkkkkkkk...","..krrrrrrrrrrk..",
+    ".krrRrrrrrrRrrk.","krrrwkrrrrwkrrrk","krrrkkrrrrkkrrrk","krRrrrrkkrrrrRrk","krrrrrrrrrrrrrrk",
+    ".krrRrrrrrrRrrk.","..krrrrrrrrrrk..","...kkkkkkkkkk...","................","................","................"];
+  const BYTE = CLASICA.slice(); BYTE[5] = "kbkkkkkkkkkkkkbk"; BYTE[6] = "kbkkwkbbbkkwkkbk"; BYTE[7] = "kbbkkkbbbbkkkbbk"; BYTE[14] = "..kkkkkkkkkkkk.."; BYTE[15] = "...pp......pp...";
+  const DORADA = CLASICA.map((row, i) => (i === 5 || i === 6 || i === 7) ? row.replace(/b/g, "o").replace(/B/g, "O") :
+    row.replace(/[bgym]/g, "o").replace(/B/g, "O").replace(/s/g, "w"));
+
+  const TYPES = {
+    clasica:   { name: "Clásica",   r: 23, w: 0.08, map: CLASICA },
+    montanera: { name: "Montañera", r: 23, w: 0.10, map: MONTANERA },
+    cheese:    { name: "Cheese",    r: 24, w: 0.10, map: CHEESE },
+    chorizo:   { name: "Chorizo",   r: 17, w: 0.04, map: CHORIZO },
+    byte:      { name: "Byte",      r: 25, w: 0.16, map: BYTE },
+    dorada:    { name: "Dorada",    r: 19, w: 0.30, map: DORADA, rare: true }
+  };
+  const ORDER = ["clasica", "montanera", "cheese", "chorizo", "byte", "dorada"];
+  const MIX = ["clasica","clasica","clasica","clasica","montanera","montanera","montanera","cheese","cheese","cheese","chorizo","chorizo","byte","dorada"];
+
+  function makeSprite(map) {
+    const c = document.createElement("canvas"); c.width = 16; c.height = 16;
+    const x = c.getContext("2d");
+    map.forEach((row, j) => { for (let i = 0; i < 16; i++) { const ch = (row[i] || "."); if (ch !== "." && PAL[ch]) { x.fillStyle = PAL[ch]; x.fillRect(i, j, 1, 1); } } });
+    return c;
+  }
+  ORDER.forEach(t => TYPES[t].sprite = makeSprite(TYPES[t].map));
+
+  // ---------- Estado guardado ----------
+  const KEY = "pb-garra-v1";
+  const int = (v, min, max, def) => (Number.isInteger(v) && v >= min && v <= max) ? v : def;
+  // Nunca se confía en lo guardado: se copia campo por campo, con tipos y rangos fijos.
+  function sanitize(raw) {
+    const o = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
+    const st = (o.stats && typeof o.stats === "object") ? o.stats : {};
+    const album = {};
+    ORDER.forEach(t => { const n = o.album && Object.prototype.hasOwnProperty.call(o.album, t) ? o.album[t] : 0; album[t] = int(n, 0, 99999, 0); });
+    return {
+      fichas: int(o.fichas, 0, 999, 5),
+      album,
+      stats: { plays: int(st.plays, 0, 1e7, 0), wins: int(st.wins, 0, 1e7, 0), slips: int(st.slips, 0, 1e7, 0), misses: int(st.misses, 0, 1e7, 0) },
+      diff: int(o.diff, 0, GREEN.length - 1, 2),
+      muted: o.muted === true
+    };
+  }
+  function loadSave() { try { const raw = localStorage.getItem(KEY); return sanitize(raw ? JSON.parse(raw) : null); } catch (e) { return sanitize(null); } }
+  let save = loadSave();
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} }
+
+  // ---------- Sonido ----------
+  const sfx = (() => {
+    let ac = null, motor = null;
+    function ctx() { if (save.muted) return null; if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } } if (ac.state === "suspended") ac.resume(); return ac; }
+    function tone(freq, dur, type = "square", vol = 0.06, when = 0) {
+      const a = ctx(); if (!a) return; const t = a.currentTime + when;
+      const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+    }
+    return {
+      coin() { tone(988, 0.08); tone(1319, 0.18, "square", 0.06, 0.08); },
+      clack() { tone(180, 0.06, "square", 0.09); tone(120, 0.08, "square", 0.07, 0.04); },
+      win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, "square", 0.07, i * 0.1)); },
+      lose() { [392, 330, 262].forEach((f, i) => tone(f, 0.2, "triangle", 0.08, i * 0.13)); },
+      motorOn() { const a = ctx(); if (!a || motor) return; const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter();
+        o.type = "sawtooth"; o.frequency.value = 64; f.type = "lowpass"; f.frequency.value = 420; g.gain.value = 0.035;
+        o.connect(f).connect(g).connect(a.destination); o.start(); motor = { o, g }; },
+      motorOff() { if (motor) { try { motor.o.stop(); } catch (e) {} motor = null; } },
+      boing(speed) { tone(170 + Math.min(speed, 900) * 0.25, 0.09, "triangle", 0.035); tone(110, 0.06, "sine", 0.03, 0.02); },
+      unlock() { ctx(); }
+    };
+  })();
+
+  // ---------- Física de peluches ----------
+  let plush = [];
+  let uid = 0;
+  function spawn(type, x, y) {
+    const T = TYPES[type];
+    plush.push({ id: ++uid, type, x, y, vx: 0, vy: 0, r: T.r, m: (T.r * T.r) / 400 * (1 + T.w * 2), a: (Math.random() - 0.5) * 0.4, held: false, gone: false });
+  }
+  function fillMachine(target = 14) {
+    const alive = plush.filter(p => !p.gone);
+    const counts = {}; alive.forEach(p => counts[p.type] = (counts[p.type] || 0) + 1);
+    const pool = MIX.slice();
+    alive.forEach(p => { const i = pool.indexOf(p.type); if (i >= 0) pool.splice(i, 1); });
+    let n = target - alive.length, k = 0;
+    while (n-- > 0 && pool.length) {
+      const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      spawn(t, 125 + Math.random() * 200, -30 - k * 46); k++;
+    }
+  }
+  function clampWalls(p) {
+    if (p.x - p.r < LEFT) { p.x = LEFT + p.r; if (p.vx < 0) p.vx *= -(Math.abs(p.vx) > BOUNCE_MIN ? BOUNCE : 0.1); }
+    if (p.x + p.r > RIGHT) { p.x = RIGHT - p.r; if (p.vx > 0) p.vx *= -(Math.abs(p.vx) > BOUNCE_MIN ? BOUNCE : 0.1); }
+    const inChute = p.x < DIV_X1;
+    const floorY = inChute ? H + 80 : FLOOR;
+    if (p.y + p.r > floorY) {
+      p.y = floorY - p.r;
+      if (p.vy > 0) { const hit = p.vy; p.vy = hit > BOUNCE_MIN ? -hit * BOUNCE * 0.9 : 0; impact(p, hit); }
+      p.vx *= 0.92;
+    }
+    // divisor entre el montón y la salida
+    const cx = Math.max(DIV_X1, Math.min(p.x, DIV_X2)), cy = Math.max(DIV_TOP, Math.min(p.y, FLOOR + 40));
+    let dx = p.x - cx, dy = p.y - cy; const d2 = dx * dx + dy * dy;
+    if (d2 < p.r * p.r) {
+      let d = Math.sqrt(d2);
+      if (d < 0.001) { dx = p.x < (DIV_X1 + DIV_X2) / 2 ? -1 : 1; dy = 0; d = 1; }
+      const nx = dx / d, ny = dy / d, push = p.r - d;
+      p.x += nx * push; p.y += ny * push;
+      const vn = p.vx * nx + p.vy * ny;
+      if (vn < 0) { const k = 1 + (-vn > BOUNCE_MIN ? BOUNCE : 0.05); p.vx -= k * vn * nx; p.vy -= k * vn * ny; impact(p, -vn); }
+    }
+  }
+  let quiet = true, lastBoing = 0;
+  function impact(p, speed) {
+    if (speed < 140) return;
+    p.sq = Math.min(0.3, speed / 1100); // se aplasta un poco al golpear
+    if (!quiet && performance.now() - lastBoing > 90) { lastBoing = performance.now(); sfx.boing(speed); }
+  }
+  function kinematicPush(p, kx, ky, kr) {
+    const dx = p.x - kx, dy = p.y - ky, d = Math.hypot(dx, dy), min = p.r + kr;
+    if (d < min && d > 0.001) {
+      const nx = dx / d, ny = dy / d; p.x += nx * (min - d); p.y += ny * (min - d);
+      const vn = p.vx * nx + p.vy * ny; if (vn < 0) { p.vx -= vn * nx; p.vy -= vn * ny; }
+    }
+  }
+  function physics(dt) {
+    const live = plush.filter(p => !p.gone);
+    for (const p of live) {
+      if (p.held) continue;
+      p.vy += G * dt; p.vx *= 0.998;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.a += (p.vx * dt) / p.r * 0.6; p.a *= 0.995;
+      if (p.sq) p.sq *= 0.985;
+    }
+    const kin = clawColliders();
+    for (let it = 0; it < 5; it++) {
+      for (let i = 0; i < live.length; i++) {
+        const a = live[i];
+        for (let j = i + 1; j < live.length; j++) {
+          const b = live[j];
+          const dx = b.x - a.x, dy = b.y - a.y, min = a.r + b.r;
+          if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
+          const d = Math.hypot(dx, dy);
+          if (d >= min || d < 0.0001) continue;
+          const nx = dx / d, ny = dy / d, overlap = min - d;
+          const ia = a.held ? 0 : 1 / a.m, ib = b.held ? 0 : 1 / b.m, sum = ia + ib;
+          if (sum === 0) continue;
+          a.x -= nx * overlap * ia / sum; a.y -= ny * overlap * ia / sum;
+          b.x += nx * overlap * ib / sum; b.y += ny * overlap * ib / sum;
+          const rvx = b.vx - a.vx, rvy = b.vy - a.vy, vn = rvx * nx + rvy * ny;
+          if (vn < 0) {
+            const e = -vn > BOUNCE_MIN ? BOUNCE * 0.8 : 0.05;
+            const jimp = -(1 + e) * vn / sum;
+            if (-vn > 140) { impact(a, -vn); impact(b, -vn); }
+            a.vx -= jimp * nx * ia; a.vy -= jimp * ny * ia; b.vx += jimp * nx * ib; b.vy += jimp * ny * ib;
+            const tx = -ny, ty = nx, vt = rvx * tx + rvy * ty, f = vt * 0.12 / sum;
+            a.vx += f * tx * ia; a.vy += f * ty * ia; b.vx -= f * tx * ib; b.vy -= f * ty * ib;
+          }
+        }
+      }
+      for (const p of live) {
+        if (p.held) continue;
+        for (const k of kin) kinematicPush(p, k.x, k.y, k.r);
+        clampWalls(p);
+      }
+    }
+    // ¿Cayó alguno por la salida?
+    for (const p of live) {
+      if (!p.held && p.x < DIV_X1 && p.y > FLOOR + 14) { p.gone = true; onPrize(p); }
+    }
+  }
+
+  // ---------- Garra ----------
+  const HANG = RAIL + 30;      // altura de la garra colgando del carro
+  const claw = { x: HOME_X, y: HANG, v: 0, s: 0, vs: 0, open: 1, state: "IDLE", t: 0, held: null, travel: 0, slipAt: Infinity, timer: 0, contact: null, waiting: false };
+  const hx = () => claw.x + claw.s; // posición real de la garra (carro + balanceo)
+  let dir = 0, round = null;
+  function fingerTips() {
+    const ang = 0.12 + 0.62 * claw.open;
+    const ry = claw.y + 12;
+    return [
+      { x: hx() - 9 - Math.sin(ang) * FL, y: ry + Math.cos(ang) * FL },
+      { x: hx() + 9 + Math.sin(ang) * FL, y: ry + Math.cos(ang) * FL }
+    ];
+  }
+  function clawColliders() {
+    if (!["LOWERING", "CLOSING", "RAISING", "CARRYING", "RETURNING"].includes(claw.state)) return []; // al soltar, la garra no empuja el peluche
+    const tips = fingerTips();
+    const out = [{ x: hx(), y: claw.y + 6, r: 13 }];
+    // al bajar y al cerrar, los dedos abiertos rodean el peluche sin empujarlo
+    if (claw.state !== "CLOSING" && claw.state !== "LOWERING") out.push({ x: tips[0].x, y: tips[0].y, r: 5 }, { x: tips[1].x, y: tips[1].y, r: 5 });
+    if (claw.held && !claw.held.gone) out.push({ x: claw.held.x, y: claw.held.y, r: claw.held.r });
+    return out;
+  }
+  function tipY() { return fingerTips()[0].y; }
+
+  function startTurn() {
+    if (claw.state !== "IDLE") return;
+    const fresh = loadSave(); save.fichas = fresh.fichas; save.album = fresh.album; save.stats = fresh.stats;
+    if (save.fichas <= 0) { refreshUI(); flashFichas(); return; }
+    dir = 0; setDirUI();
+    save.fichas--; save.stats.plays++; persist();
+    sfx.coin();
+    hideBanner();
+    claw.state = "MOVING"; claw.timer = TURN_TIME; claw.x = HOME_X; claw.y = HANG; claw.v = 0; claw.s = 0; claw.vs = 0; claw.open = 1;
+    round = { result: null, prize: null, tip: "" };
+    refreshUI();
+  }
+  function drop() {
+    if (claw.state !== "MOVING") return;
+    dir = 0; setDirUI();
+    claw.state = "LOWERING"; sfx.motorOn(); refreshUI();
+  }
+  // Se mide en el instante en que la garra toca: así cuenta la puntería del jugador,
+  // no el empujón de los dedos al cerrarse.
+  function measureContact() {
+    const live = plush.filter(p => !p.gone);
+    let best = null;
+    for (const p of live) {
+      const dx = p.x - hx();
+      if (Math.abs(dx) < 26 && p.y > claw.y && p.y - claw.y < 74) {
+        if (!best || Math.abs(dx) < Math.abs(best.x - hx()) - 0.5 || (Math.abs(Math.abs(dx) - Math.abs(best.x - hx())) <= 0.5 && p.y < best.y)) best = p;
+      }
+    }
+    if (!best) { claw.contact = null; return; }
+    claw.contact = { p: best, dx: best.x - hx(),
+      // solo cuenta como 'enterrado' si otro peluche está realmente encima, no al lado
+      buried: live.filter(q => q !== best && q.y < best.y - best.r * 0.5 && Math.abs(q.x - best.x) < best.r * 0.7 && Math.hypot(q.x - best.x, q.y - best.y) < q.r + best.r + 3).length };
+  }
+  // La barra: la puntería y el peso del peluche definen qué tan grande es la zona verde;
+  // el toque del jugador define si el agarre es firme, se resbala o falla.
+  function startGrip() {
+    const c = claw.contact, T = TYPES[c.p.type];
+    const aimQ = Math.max(0, 1 - Math.abs(c.dx) / 22);
+    const weightQ = 1 - T.w * 2;
+    let green = GREEN[save.diff] * (0.35 + 0.65 * aimQ) * weightQ;
+    if (c.buried) green *= 0.4;
+    const yellow = green + 0.1 * (0.5 + 0.5 * aimQ);
+    claw.grip = { green, yellow, aimQ, sweep: SWEEP[save.diff], m: 0, dir: 1 };
+    const G = 50 - green * 100, Y = 50 - yellow * 100, g2 = 50 + green * 100, y2 = 50 + yellow * 100;
+    meterEl.bar.style.background = `linear-gradient(90deg,#E5383B 0%,#E5383B ${Math.max(0, Y - 12)}%,#F28C28 ${Math.max(0, Y - 4)}%,#F2C230 ${Y}%,#F2C230 ${G - 0.5}%,#43C35A ${G}%,#43C35A ${g2}%,#F2C230 ${g2 + 0.5}%,#F2C230 ${y2}%,#F28C28 ${Math.min(100, y2 + 4)}%,#E5383B ${Math.min(100, y2 + 12)}%,#E5383B 100%)`;
+    meterEl.l.style.left = G + "%"; meterEl.r.style.left = g2 + "%";
+    meterEl.name.textContent = T.name.toUpperCase();
+    meterEl.verdict.textContent = "";
+    meterEl.box.classList.remove("done");
+    meterEl.box.hidden = false;
+    claw.state = "GRIPPING"; claw.t = 0; claw.gripT0 = realClock;
+    refreshUI();
+  }
+  function squeeze(timeout) {
+    if (claw.state !== "GRIPPING") return;
+    const g = claw.grip, d = Math.abs(g.m - 0.5);
+    const zone = timeout ? "red" : d <= g.green ? "green" : d <= g.yellow ? "yellow" : "red";
+    const q = zone === "yellow" ? 1 - (d - g.green) / Math.max(0.001, g.yellow - g.green) : 0;
+    const late = (g.m - 0.5) * g.dir > 0; // ya había pasado el verde
+    claw.gripResult = { zone, q, late, timeout };
+    meterEl.verdict.textContent = zone === "green" ? "¡PERFECTO!" : zone === "yellow" ? (late ? "UN POCO TARDE" : "UN POCO PRONTO") : (timeout ? "NO APRETASTE" : late ? "MUY TARDE" : "MUY PRONTO");
+    meterEl.verdict.style.color = zone === "green" ? "#43C35A" : zone === "yellow" ? "#F2C230" : "#FF6B6E";
+    meterEl.box.classList.add("done");
+    setTimeout(() => { meterEl.box.hidden = true; }, 900);
+    sfx.clack();
+    claw.state = "CLOSING"; claw.t = 0; claw.open = 0.75;
+    refreshUI();
+  }
+  function evaluateGrab() {
+    const c = claw.contact, r = claw.gripResult;
+    if (!c || c.p.gone) { round.result = "miss"; round.tip = "No había ningún peluche bajo la garra."; return; }
+    const best = c.p;
+    const aimNote = claw.grip && claw.grip.aimQ < 0.6 ? " Además, la garra no quedó centrada: el verde era más pequeño." : "";
+    if (r && r.zone === "green") {
+      hold(best, Infinity);
+    } else if (r && r.zone === "yellow") {
+      const total = (claw.y - HANG) + (claw.x - HOME_X) + 40;
+      hold(best, Math.max(18, total * (0.15 + 0.7 * r.q)));
+      round.tip = (r.late ? "Apretaste un poco tarde y se resbaló." : "Apretaste un poco pronto y se resbaló.") + aimNote;
+    } else {
+      round.result = "miss";
+      best.vx += (c.dx > 0 ? 1 : -1) * 70; best.vy -= 40;
+      round.tip = (!r || r.timeout ? "No apretaste a tiempo." : r.late ? "Apretaste muy tarde." : "Apretaste muy pronto.") + aimNote;
+    }
+  }
+  function hold(p, slipAt) {
+    p.held = true; p.vx = 0; p.vy = 0;
+    claw.held = p; claw.travel = 0; claw.slipAt = slipAt;
+  }
+  function letGo(vx) {
+    const p = claw.held; if (!p) return;
+    p.held = false; p.vx = vx; p.vy = 0; claw.held = null;
+  }
+  function onPrize(p) {
+    if (!round || round.prize || claw.state === "IDLE" || claw.state === "MOVING") return; // solo cuenta lo que cae en tu turno
+    round.prize = p.type;
+    const isNew = !save.album[p.type];
+    save.album[p.type] = (save.album[p.type] || 0) + 1;
+    save.stats.wins++; persist();
+    round.result = "win"; round.isNew = isNew;
+  }
+
+  function approach(v, target, dt) { const d = target - v, m = ACCEL * dt; return v + Math.max(-m, Math.min(m, d)); }
+  function moveCarriage(dt, target) {
+    claw.v = approach(claw.v, target, dt);
+    claw.x += claw.v * dt;
+    if (claw.x < MIN_X) { claw.x = MIN_X; claw.v = 0; }
+    if (claw.x > MAX_X) { claw.x = MAX_X; claw.v = 0; }
+  }
+  function updateClaw(dt) {
+    const prevV = claw.v;
+    switch (claw.state) {
+      case "IDLE": claw.v = 0; break;
+      case "MOVING": {
+        moveCarriage(dt, dir * MOVE_SPEED);
+        claw.timer -= dt;
+        if (claw.timer <= 0) { claw.timer = 0; drop(); }
+        break;
+      }
+      case "LOWERING": {
+        moveCarriage(dt, 0); // si soltaste en movimiento, el carro todavía se desliza
+        claw.y += LOWER_SPEED * dt;
+        const ty = tipY(), x = hx();
+        const touching = plush.some(p => !p.gone && Math.abs(p.x - x) < p.r * 0.7 + 6 && p.y - p.r <= ty - 2);
+        if (touching || ty >= FLOOR - 3) { measureContact(); sfx.motorOff(); if (claw.contact) startGrip(); else { claw.gripResult = null; claw.state = "CLOSING"; claw.t = 0; } }
+        break;
+      }
+      case "GRIPPING": {
+        claw.t = realClock - claw.gripT0;
+        const g = claw.grip, ph = (claw.t / g.sweep) % 2;
+        g.m = ph < 1 ? ph : 2 - ph; g.dir = ph < 1 ? 1 : -1;
+        claw.open = 0.75 + Math.sin(claw.t * 30) * 0.02;
+        if (claw.t >= GRIP_TIMEOUT) squeeze(true);
+        break;
+      }
+      case "CLOSING": {
+        moveCarriage(dt, 0);
+        claw.t += dt; claw.open = Math.max(0.05, 1 - claw.t / 0.45);
+        if (claw.t >= 0.45) { sfx.clack(); evaluateGrab(); claw.state = "RAISING"; sfx.motorOn(); }
+        break;
+      }
+      case "RAISING": {
+        moveCarriage(dt, 0);
+        const dy = Math.min(RAISE_SPEED * dt, claw.y - HANG);
+        claw.y -= dy; moveHeld(dy, 0);
+        if (claw.y <= HANG + 0.01) {
+          claw.y = HANG;
+          if (claw.held) { claw.state = "CARRYING"; claw.timer = CARRY_TIME; sfx.motorOff(); refreshUI(); }
+          else claw.state = "RETURNING";
+        }
+        break;
+      }
+      case "CARRYING": {
+        const x0 = claw.x;
+        moveCarriage(dt, dir * MOVE_SPEED);
+        moveHeld(Math.abs(claw.x - x0), claw.v);
+        claw.timer -= dt;
+        if (!claw.held) { claw.state = "RETURNING"; dir = 0; setDirUI(); refreshUI(); }
+        else if (claw.timer <= 0) { claw.timer = 0; release(); }
+        break;
+      }
+      case "RETURNING": {
+        const dx = Math.min(RETURN_SPEED * dt, claw.x - HOME_X);
+        claw.x -= dx; claw.v = -dx / dt; moveHeld(dx, -RETURN_SPEED);
+        if (claw.x <= HOME_X + 0.01) { claw.x = HOME_X; claw.v = 0; claw.state = "SETTLE"; claw.t = 0; sfx.motorOff(); }
+        break;
+      }
+      case "RELEASING": {
+        claw.t += dt;
+        claw.open = Math.min(1, 0.05 + claw.t / 0.3);
+        if (claw.t >= 0.3) { claw.state = "SETTLE"; claw.t = 0; }
+        break;
+      }
+      case "SETTLE": {
+        claw.t += dt;
+        if (claw.state === "SETTLE" && claw.x > HOME_X) { const back = Math.min(RETURN_SPEED * dt, claw.x - HOME_X); claw.x -= back; claw.v = -back / dt; } // la garra vuelve sola a casa
+        else claw.v = 0;
+        if (claw.t >= 2.2 || round.result === "win") finishRound();
+        break;
+      }
+    }
+    // péndulo: el balanceo responde a la aceleración del carro
+    const a = (claw.v - prevV) / dt;
+    if (claw.state === "LOWERING" || claw.state === "CLOSING" || claw.state === "GRIPPING") {
+      claw.vs = 0; // baja recta desde donde estaba al pulsar: lo que muestra la sombra es donde cae
+    } else {
+      const damp = claw.state === "IDLE" ? 4 : SW_C;
+      claw.vs += (-SW_K * claw.s - damp * claw.vs - SW_B * a) * dt;
+      claw.s += claw.vs * dt;
+    }
+    if (claw.held) {
+      const p = claw.held;
+      p.x = hx(); p.y = claw.y + 12 + FL * 0.72 + p.r * 0.35;
+      p.a = claw.s * -0.01;
+    }
+  }
+  function release() {
+    if (claw.state !== "CARRYING") return;
+    dir = 0; setDirUI(); sfx.motorOff();
+    const overChute = hx() < DIV_X1;
+    round.releasedOver = overChute;
+    letGo(claw.v + claw.vs * 0.4); // sale con la inercia del carro y parte del balanceo
+    if (!overChute && round.result !== "win") { round.result = "drop"; round.tip = "Lo soltaste fuera de la salida."; }
+    claw.state = "RELEASING"; claw.t = 0; refreshUI();
+  }
+  function moveHeld(d, vx) {
+    if (!claw.held) return;
+    claw.travel += d;
+    if (claw.travel >= claw.slipAt) { letGo(vx * 0.5); round.result = "slip"; }
+  }
+  function finishRound() {
+    claw.state = "IDLE"; sfx.motorOff();
+    if (round.result === "win") {
+      sfx.win();
+      showBanner("¡PREMIO!", `Peluche ${TYPES[round.prize].name}`, round.isNew ? "¡Nuevo en tu álbum!" : `Ya tienes ${save.album[round.prize]}.`, false);
+    } else if (!round.result && round.releasedOver) {
+      save.stats.misses++; persist();
+      sfx.lose(); showBanner("¡REBOTÓ!", "Cayó sobre la salida pero rebotó fuera.", "Suéltalo quieto y centrado sobre el hueco.", true);
+    } else if (round.result === "drop") {
+      save.stats.misses++; persist();
+      sfx.lose(); showBanner("¡OH NO!", "Cayó fuera de la salida.", "Suéltalo cuando la garra esté sobre el hueco de SALIDA.", true);
+    } else if (round.result === "slip") {
+      save.stats.slips++; persist();
+      sfx.lose(); showBanner("¡CASI!", "Se te resbaló en el camino.", round.tip, true);
+    } else {
+      save.stats.misses++; persist();
+      sfx.lose(); showBanner("¡UFF!", "No lo alcanzó a sujetar.", round.tip, true);
+    }
+    if (plush.filter(p => !p.gone).length < 10) fillMachine();
+    plush = plush.filter(p => !p.gone);
+    refreshUI();
+  }
+
+  // ---------- Dibujo ----------
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+  function fitCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  fitCanvas(); window.addEventListener("resize", fitCanvas);
+
+  let tNow = 0;
+  function draw() {
+    ctx.imageSmoothingEnabled = false;
+    // fondo del gabinete
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#2B2148"); bg.addColorStop(1, "#171327");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // cuadrícula de fondo
+    ctx.fillStyle = "rgba(255,255,255,0.035)";
+    for (let y = 40; y < FLOOR; y += 16) for (let x = (y / 16) % 2 ? 8 : 0; x < W; x += 16) ctx.fillRect(x, y, 8, 8);
+    // marquesina
+    ctx.fillStyle = "#15131F"; ctx.fillRect(0, 0, W, 26);
+    ctx.font = "700 14px Silkscreen, 'Courier New', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFC83D"; ctx.fillText("PIXEL BURGER", W / 2, 13);
+    for (let i = 0; i < 9; i++) {
+      const on = Math.floor(tNow * 4 + i) % 2 === 0;
+      ctx.fillStyle = on ? "#FF4F8B" : "#5A2A44";
+      ctx.fillRect(10 + i * 9, 10, 5, 5); ctx.fillRect(W - 15 - i * 9, 10, 5, 5);
+    }
+    // riel
+    ctx.fillStyle = "#3A3450"; ctx.fillRect(LEFT, RAIL - 16, RIGHT - LEFT, 6);
+    ctx.fillStyle = "#5C5478"; ctx.fillRect(LEFT, RAIL - 16, RIGHT - LEFT, 2);
+    // salida de premios
+    ctx.fillStyle = "#0C0A14"; ctx.fillRect(LEFT, DIV_TOP, DIV_X1 - LEFT, H - DIV_TOP);
+    ctx.fillStyle = "rgba(255,200,61,0.12)"; ctx.fillRect(LEFT, DIV_TOP - 70, DIV_X1 - LEFT, 70);
+    ctx.font = "700 11px Silkscreen, 'Courier New', monospace"; ctx.fillStyle = "#FFC83D";
+    ctx.fillText("SALIDA", (LEFT + DIV_X1) / 2, DIV_TOP - 8);
+    // divisor con franjas
+    for (let y = DIV_TOP; y < FLOOR; y += 10) { ctx.fillStyle = ((y - DIV_TOP) / 10) % 2 ? "#15131F" : "#FFC83D"; ctx.fillRect(DIV_X1, y, DIV_X2 - DIV_X1, 10); }
+    // sombra: dónde caería la garra si bajara ahora
+    if (claw.state === "MOVING") {
+      const x = hx(); let top = FLOOR;
+      for (const p of plush) if (!p.gone && Math.abs(p.x - x) < p.r) top = Math.min(top, p.y - Math.sqrt(Math.max(0, p.r * p.r - (p.x - x) ** 2)));
+      ctx.fillStyle = "rgba(255,200,61,0.55)"; ctx.beginPath(); ctx.ellipse(x, top - 2, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    // peluches
+    for (const p of plush) {
+      if (p.gone) continue;
+      const s = TYPES[p.type].sprite, size = p.r * 2.3;
+      const sq = p.sq || 0;
+      ctx.save(); ctx.translate(p.x, p.y + sq * p.r * 0.6); ctx.scale(1 + sq, 1 - sq); ctx.rotate(p.a);
+      ctx.drawImage(s, -size / 2, -size / 2, size, size);
+      if (p.type === "dorada") { const tw = (Math.sin(tNow * 6 + p.id) + 1) / 2; ctx.fillStyle = `rgba(255,255,255,${0.4 + tw * 0.6})`; ctx.fillRect(size * 0.22, -size * 0.42, 3, 3); }
+      ctx.restore();
+    }
+    // garra
+    drawClaw();
+    if (claw.state === "GRIPPING") meterEl.mark.style.left = (claw.grip.m * 100).toFixed(2) + "%";
+    // piso frontal
+    ctx.fillStyle = "#15131F"; ctx.fillRect(DIV_X2, FLOOR, RIGHT - DIV_X2 + 12, H - FLOOR);
+    ctx.fillStyle = "#FF4F8B"; ctx.fillRect(DIV_X2, FLOOR, RIGHT - DIV_X2 + 12, 3);
+    ctx.font = "700 12px Silkscreen, 'Courier New', monospace"; ctx.fillStyle = "#B9B3C9";
+    ctx.fillText(claw.state === "MOVING" ? "MUEVE Y AGARRA" : claw.state === "GRIPPING" ? "¡APRIETA!" : claw.state === "CARRYING" ? "LLÉVALO Y SUELTA" : (claw.state === "IDLE" ? "METE UNA FICHA" : "…"), (DIV_X2 + RIGHT) / 2, (FLOOR + H) / 2 + 2);
+    // vidrio
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.beginPath(); ctx.moveTo(240, 30); ctx.lineTo(268, 30); ctx.lineTo(150, FLOOR); ctx.lineTo(122, FLOOR); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(282, 30); ctx.lineTo(290, 30); ctx.lineTo(172, FLOOR); ctx.lineTo(164, FLOOR); ctx.fill();
+  }
+  function drawClaw() {
+    const cx0 = claw.x, x = hx(), y = claw.y;
+    // carro y cable (el cable se inclina con el balanceo)
+    ctx.fillStyle = "#FF4F8B"; ctx.fillRect(cx0 - 14, RAIL - 20, 28, 12);
+    ctx.fillStyle = "#15131F"; ctx.fillRect(cx0 - 14, RAIL - 9, 28, 2);
+    ctx.strokeStyle = "#B9B3C9"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx0, RAIL - 8); ctx.lineTo(x, y); ctx.stroke();
+    // dedos
+    const ang = 0.12 + 0.62 * claw.open, ry = y + 12;
+    for (const sgn of [-1, 1]) {
+      const bx = x + sgn * 9, tx = bx + sgn * Math.sin(ang) * FL, ty = ry + Math.cos(ang) * FL;
+      ctx.strokeStyle = "#15131F"; ctx.lineWidth = 8; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(bx, ry); ctx.lineTo(tx, ty); ctx.lineTo(tx - sgn * 8, ty + 4); ctx.stroke();
+      ctx.strokeStyle = "#F5F1E8"; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(bx, ry); ctx.lineTo(tx, ty); ctx.lineTo(tx - sgn * 8, ty + 4); ctx.stroke();
+    }
+    // cuerpo
+    ctx.fillStyle = "#15131F"; ctx.fillRect(x - 17, y - 2, 34, 18);
+    ctx.fillStyle = "#FFC83D"; ctx.fillRect(x - 15, y, 30, 14);
+    ctx.fillStyle = "#FF4F8B"; ctx.fillRect(x - 15, y + 6, 30, 3);
+    ctx.fillStyle = (claw.state === "MOVING" || claw.state === "CARRYING") && Math.floor(tNow * 3) % 2 ? "#5BC25B" : "#2E6B2E"; ctx.fillRect(x - 3, y + 2, 6, 3);
+  }
+
+  // ---------- Interfaz ----------
+  const $ = id => document.getElementById(id);
+  const grabBtn = $("grab"), leftBtn = $("left"), rightBtn = $("right");
+  const meterEl = { box: $("meter"), bar: $("mBar"), mark: $("mMark"), name: $("mName"), verdict: $("mVerdict"), l: $("mL"), r: $("mR") };
+  function refreshUI() {
+    $("fichas").textContent = save.fichas;
+    $("chipFichas").classList.toggle("warn", save.fichas === 0);
+    $("time").textContent = (claw.state === "MOVING" || claw.state === "CARRYING") ? Math.ceil(claw.timer) : "--";
+    const got = ORDER.filter(t => save.album[t]).length;
+    $("albumCount").textContent = `${got}/6`;
+    if (claw.state === "IDLE") {
+      grabBtn.disabled = save.fichas <= 0;
+      grabBtn.innerHTML = save.fichas > 0 ? "JUGAR<small>1 ficha</small>" : "SIN<small>fichas</small>";
+    } else if (claw.state === "MOVING") {
+      grabBtn.disabled = false; grabBtn.innerHTML = "AGARRAR<small>espacio</small>";
+    } else if (claw.state === "GRIPPING") {
+      grabBtn.disabled = false; grabBtn.innerHTML = "¡APRIETA!<small>espacio</small>";
+    } else if (claw.state === "CARRYING") {
+      grabBtn.disabled = false; grabBtn.innerHTML = "SOLTAR<small>espacio</small>";
+    } else { grabBtn.disabled = true; grabBtn.innerHTML = "…"; }
+    leftBtn.disabled = rightBtn.disabled = !(claw.state === "MOVING" || claw.state === "CARRYING");
+    $("mute").textContent = save.muted ? "Sonido no" : "Sonido sí";
+    $("mute").setAttribute("aria-pressed", String(save.muted));
+    $("diff").value = String(save.diff);
+    renderStats(); renderAlbum();
+  }
+  let lastTimeShown = -1;
+  function tickUI() {
+    if ((claw.state === "MOVING" || claw.state === "CARRYING")) { const s = Math.ceil(claw.timer); if (s !== lastTimeShown) { lastTimeShown = s; $("time").textContent = s; } }
+  }
+  function renderStats() {
+    const st = save.stats;
+    $("sPlays").textContent = st.plays; $("sWins").textContent = st.wins; $("sSlips").textContent = st.slips;
+    $("sRate").textContent = st.plays ? Math.round(st.wins / st.plays * 100) + "%" : "–";
+  }
+  let albumBuilt = false;
+  function renderAlbum() {
+    const box = $("album");
+    if (!albumBuilt) {
+      box.innerHTML = "";
+      ORDER.forEach(t => {
+        const card = document.createElement("div"); card.className = "card" + (TYPES[t].rare ? " rare" : ""); card.id = "card-" + t;
+        const c = document.createElement("canvas"); c.width = 16; c.height = 16; c.getContext("2d").drawImage(TYPES[t].sprite, 0, 0);
+        const b = document.createElement("b"); b.textContent = TYPES[t].name;
+        const s = document.createElement("span");
+        card.append(c, b, s); box.append(card);
+      });
+      albumBuilt = true;
+    }
+    ORDER.forEach(t => {
+      const n = save.album[t] || 0, card = $("card-" + t);
+      card.classList.toggle("locked", !n); card.classList.toggle("got", !!n);
+      card.querySelector("span").textContent = n ? `x${n}` : (TYPES[t].rare ? "RARA" : "???");
+    });
+  }
+  let bannerTimer = null;
+  function showBanner(title, text, tip, lose) {
+    const b = $("banner"); b.classList.toggle("lose", lose);
+    $("bTitle").textContent = title; $("bText").textContent = text; $("bTip").textContent = tip || "";
+    b.hidden = false; clearTimeout(bannerTimer); bannerTimer = setTimeout(hideBanner, 3200);
+  }
+  function hideBanner() { $("banner").hidden = true; }
+  function flashFichas() { showBanner("SIN FICHAS", "Cada compra en Pixel Burger da fichas.", "En la pestaña Prueba puedes simular una compra.", true); }
+  function setDirUI() { leftBtn.classList.toggle("on", dir < 0); rightBtn.classList.toggle("on", dir > 0); }
+
+  function bindHold(btn, d) {
+    const down = e => { e.preventDefault(); sfx.unlock(); if (!(claw.state === "MOVING" || claw.state === "CARRYING")) return; dir = d; setDirUI(); sfx.motorOn(); try { btn.setPointerCapture(e.pointerId); } catch (_) {} };
+    const up = () => { if (dir === d) { dir = 0; setDirUI(); if ((claw.state === "MOVING" || claw.state === "CARRYING")) sfx.motorOff(); } };
+    btn.addEventListener("pointerdown", down);
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => btn.addEventListener(ev, up));
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  bindHold(leftBtn, -1); bindHold(rightBtn, 1);
+  grabBtn.addEventListener("click", () => { sfx.unlock(); if (claw.state === "IDLE") startTurn(); else if (claw.state === "MOVING") drop(); else if (claw.state === "GRIPPING") squeeze(false); else if (claw.state === "CARRYING") release(); });
+  document.querySelector(".stage").addEventListener("pointerdown", () => { if (claw.state === "GRIPPING") squeeze(false); });
+
+  window.addEventListener("storage", e => { if (e.key === KEY && claw.state === "IDLE") { save = Object.assign(loadSave(), { diff: save.diff, muted: save.muted }); refreshUI(); } });
+  const releaseKeys = () => { keys.clear(); if (dir) { dir = 0; setDirUI(); sfx.motorOff(); } };
+  window.addEventListener("blur", releaseKeys);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseKeys(); });
+  const keys = new Set();
+  window.addEventListener("keydown", e => {
+    if (e.target && e.target.tagName === "SELECT") return;
+    if (["ArrowLeft", "ArrowRight", "a", "d", "A", "D"].includes(e.key)) {
+      e.preventDefault(); keys.add(e.key.toLowerCase().replace("arrow", ""));
+      if ((claw.state === "MOVING" || claw.state === "CARRYING")) { dir = (keys.has("right") || keys.has("d") ? 1 : 0) - (keys.has("left") || keys.has("a") ? 1 : 0); setDirUI(); if (dir) sfx.motorOn(); }
+    } else if (e.key === " " || e.key === "Enter") {
+      if (document.activeElement && document.activeElement.tagName === "BUTTON") return; // el botón enfocado ya responde a espacio/enter
+      e.preventDefault(); sfx.unlock(); if (claw.state === "IDLE") startTurn(); else if (claw.state === "MOVING") drop(); else if (claw.state === "GRIPPING") squeeze(false); else if (claw.state === "CARRYING") release();
+    }
+  });
+  window.addEventListener("keyup", e => {
+    keys.delete(e.key.toLowerCase().replace("arrow", ""));
+    if ((claw.state === "MOVING" || claw.state === "CARRYING")) { dir = (keys.has("right") || keys.has("d") ? 1 : 0) - (keys.has("left") || keys.has("a") ? 1 : 0); setDirUI(); if (!dir) sfx.motorOff(); }
+  });
+
+  document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => { const on = t === tab; t.setAttribute("aria-selected", String(on)); $(t.dataset.tab).hidden = !on; });
+  }));
+  $("mute").addEventListener("click", () => { save.muted = !save.muted; if (save.muted) sfx.motorOff(); persist(); refreshUI(); });
+  $("diff").addEventListener("change", e => { save.diff = Number(e.target.value); persist(); });
+  $("addFicha").addEventListener("click", () => { save = Object.assign(loadSave(), { diff: save.diff, muted: save.muted }); save.fichas = Math.min(999, save.fichas + 1); persist(); sfx.coin(); refreshUI(); });
+  $("refill").addEventListener("click", () => { if (claw.state !== "IDLE") return; plush = []; fillMachine(); presettle(); });
+  let resetArmed = false;
+  $("reset").addEventListener("click", () => {
+    if (claw.state !== "IDLE") return;
+    if (!resetArmed) { resetArmed = true; $("resetNote").hidden = false; setTimeout(() => { resetArmed = false; $("resetNote").hidden = true; }, 4000); return; }
+    resetArmed = false; $("resetNote").hidden = true;
+    save = sanitize({ diff: save.diff, muted: save.muted }); persist(); refreshUI();
+  });
+
+  // ---------- Bucle ----------
+  function presettle() { quiet = true; for (let i = 0; i < 480; i++) physics(1 / 120); quiet = false; }
+  fillMachine(); presettle();
+  let last = performance.now(), acc = 0;
+  const STEP = 1 / 240;
+  function loop(now) {
+    const raw = Math.max(0, (now - last) / 1000); last = now; advanceReal(Math.min(raw, 0.25));
+    let dt = Math.min(0.05, raw); tNow += dt;
+    acc += dt;
+    while (acc >= STEP) { updateClaw(STEP); physics(STEP); acc -= STEP; }
+    tickUI(); draw();
+    requestAnimationFrame(loop);
+  }
+  refreshUI();
+  if (document.fonts && document.fonts.load) document.fonts.load("700 14px Silkscreen").catch(() => {});
+  requestAnimationFrame(loop);
+})();
+</script>

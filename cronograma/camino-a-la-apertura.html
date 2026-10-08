@@ -1,0 +1,570 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Camino a la Apertura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF6F1;
+    --surface: #FFFFFF;
+    --surface-2: #F3ECF4;
+    --ink: #241C2C;
+    --muted: #746C82;
+    --line: #E7DEEA;
+    --magenta: #C81E73;
+    --magenta-ink: #A0155D;
+    --yellow: #E8A700;
+    --yellow-soft: #FBEBC2;
+    --done-bg: #EEF6EC;
+    --done-ink: #2F6B3F;
+    --shadow: 0 1px 2px rgba(36,28,44,0.06), 0 6px 20px rgba(36,28,44,0.05);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #18121D;
+      --surface: #221A29;
+      --surface-2: #2B2032;
+      --ink: #F3ECF7;
+      --muted: #B0A6BC;
+      --line: #3A2E44;
+      --magenta: #FF5CA8;
+      --magenta-ink: #FF8AC2;
+      --yellow: #FFCF4D;
+      --yellow-soft: #3A3220;
+      --done-bg: #1E3324;
+      --done-ink: #7BC98F;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #18121D;
+    --surface: #221A29;
+    --surface-2: #2B2032;
+    --ink: #F3ECF7;
+    --muted: #B0A6BC;
+    --line: #3A2E44;
+    --magenta: #FF5CA8;
+    --magenta-ink: #FF8AC2;
+    --yellow: #FFCF4D;
+    --yellow-soft: #3A3220;
+    --done-bg: #1E3324;
+    --done-ink: #7BC98F;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding-inline: max(16px, env(safe-area-inset-left, 0px));
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding-block: 28px 64px; }
+
+  .kicker {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--magenta-ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .kicker::before {
+    content: "";
+    width: 8px; height: 8px;
+    background: var(--yellow);
+    display: inline-block;
+  }
+
+  h1 {
+    font-family: "Archivo Black", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 10px 0 6px;
+    text-wrap: balance;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 62ch;
+    line-height: 1.55;
+    margin: 0 0 26px;
+  }
+  .sub b { color: var(--ink); }
+
+  .console {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px 24px;
+    align-items: center;
+  }
+  @media (max-width: 620px) {
+    .console { grid-template-columns: 1fr; }
+  }
+  .metric { display: flex; flex-direction: column; gap: 2px; }
+  .metric .num {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 30px;
+    font-variant-numeric: tabular-nums;
+    color: var(--magenta);
+  }
+  .metric .lbl {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .track-col { min-width: 0; }
+  .track {
+    display: flex;
+    gap: 5px;
+    height: 14px;
+  }
+  .cell {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cell .fill {
+    position: absolute; inset: 0;
+    width: 0%;
+    background: linear-gradient(90deg, var(--magenta), var(--yellow));
+    transition: width .4s ease;
+  }
+  .cell.opening { border-color: var(--yellow); }
+  .track-caption {
+    display: flex; justify-content: space-between;
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 11px; color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .note {
+    margin-top: 22px;
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    border-left: 3px solid var(--yellow);
+    padding: 10px 14px;
+    background: var(--yellow-soft);
+    border-radius: 0 8px 8px 0;
+  }
+  .note b { color: var(--ink); }
+
+  .weeks { margin-top: 34px; display: flex; flex-direction: column; gap: 14px; }
+
+  .week {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .week.opening-week { border-color: var(--yellow); }
+
+  .week-head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+  @media (max-width: 560px) {
+    .week-head { grid-template-columns: auto 1fr; row-gap: 8px; }
+    .week-head .wk-progress-wrap { grid-column: 1 / -1; }
+  }
+  .wk-index {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--magenta);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+  .wk-titles { min-width: 0; }
+  .wk-dates {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .wk-obj {
+    font-weight: 600;
+    font-size: 15px;
+    margin-top: 2px;
+  }
+  .wk-progress-wrap {
+    display: flex; align-items: center; gap: 8px;
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 12px; color: var(--muted);
+  }
+  .wk-ring {
+    width: 30px; height: 30px; flex: none;
+  }
+  .wk-ring circle.bg { stroke: var(--line); }
+  .wk-ring circle.fg { stroke: var(--magenta); transition: stroke-dashoffset .3s ease; }
+  .chevron {
+    width: 18px; height: 18px; flex: none;
+    color: var(--muted);
+    transition: transform .2s ease;
+  }
+  .week.open .chevron { transform: rotate(180deg); }
+
+  .week-body {
+    display: none;
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--line);
+  }
+  .week.open .week-body { display: block; }
+
+  .task-list { display: flex; flex-direction: column; margin-top: 12px; }
+  .task {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 12px;
+    padding: 11px 0;
+    border-top: 1px solid var(--line);
+  }
+  .task:first-child { border-top: none; }
+  .task input[type="checkbox"] {
+    appearance: none;
+    width: 19px; height: 19px;
+    margin-top: 2px;
+    border: 1.5px solid var(--muted);
+    border-radius: 5px;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    background: var(--surface);
+    flex: none;
+  }
+  .task input[type="checkbox"]::before {
+    content: "";
+    width: 10px; height: 10px;
+    transform: scale(0);
+    transition: transform .12s ease;
+    background: var(--magenta);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 45% 62%);
+  }
+  .task input[type="checkbox"]:checked::before { transform: scale(1); }
+  .task input[type="checkbox"]:checked { border-color: var(--magenta); }
+  .task-text { font-size: 14.5px; line-height: 1.45; }
+  .task.done .task-text .t-main { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+  .t-main { font-weight: 500; }
+  .t-meta {
+    margin-top: 3px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .t-meta .who {
+    font-family: "Space Mono", ui-monospace, monospace;
+    color: var(--magenta-ink);
+  }
+  .t-meta .when {
+    font-family: "Space Mono", ui-monospace, monospace;
+    color: var(--yellow);
+    background: var(--yellow-soft);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  .opening-card {
+    margin-top: 22px;
+    background: linear-gradient(135deg, var(--magenta) 0%, var(--magenta-ink) 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 24px 22px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .opening-card .oc-date {
+    font-family: "Archivo Black", sans-serif;
+    font-size: clamp(26px, 4vw, 36px);
+    line-height: 1;
+  }
+  .opening-card .oc-sub {
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .opening-card .oc-copy { font-size: 13.5px; opacity: 0.92; max-width: 46ch; line-height: 1.5; }
+
+  footer {
+    margin-top: 40px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+</style>
+
+<div class="wrap">
+  <div class="kicker">Pixel Burger &middot; Fase C — Lanzamiento</div>
+  <h1>Camino a la apertura</h1>
+  <p class="sub">Del <b>15 de septiembre</b> (hoy) al <b>1 de noviembre de 2026</b> — 47 días, 7 semanas. Cada tarea ya estaba señalada como pendiente en algún documento del proyecto; esto solo les pone fecha y orden de dependencia.</p>
+
+  <div class="console">
+    <div class="metric">
+      <span class="num" id="days-left">—</span>
+      <span class="lbl">días para abrir</span>
+    </div>
+    <div class="track-col">
+      <div class="track" id="track"></div>
+      <div class="track-caption">
+        <span>Sem. 1 · 15 sep</span>
+        <span>Sem. 7 · Apertura 1 nov</span>
+      </div>
+    </div>
+    <div class="metric">
+      <span class="num" id="tasks-done">0/0</span>
+      <span class="lbl">tareas marcadas</span>
+    </div>
+  </div>
+
+  <div class="note">Este cronograma es tuyo para marcar: los ✓ se guardan en este navegador. Si algo se atrasa, corre las fechas de lo que depende de eso en vez de forzar el 1 de noviembre — abrir con la operación probada importa más que la fecha exacta.</div>
+
+  <div class="weeks" id="weeks"></div>
+
+  <div class="opening-card">
+    <div>
+      <div class="oc-sub">Apertura</div>
+      <div class="oc-date">Domingo 1 de noviembre</div>
+    </div>
+    <div class="oc-copy">Fondo de cambio y caja menor listos, moto con gasolina y casco, checklist de apertura impresa (Manual de Apertura/Cierre) — y a abrir. La web/PWA y el sistema de puntos, si no alcanzan a estar listos, se suman después sin retrasar esta fecha.</div>
+  </div>
+
+  <footer>
+    Versión 1.3 — actualizado 2026-09-20 (documentos de FASE B completos). Después de abrir: todas las políticas y manuales de FASE B quedan para revisión formal tras las primeras 4 semanas de operación real (≈ 29 de noviembre de 2026), y se retoma la web/PWA con el sistema de puntos (ver Estrategia de Canales) si no quedó lista antes. WhatsApp Business queda aplazado sin fecha — Diego no lo ve prioritario por ahora. Documento completo también disponible en el proyecto Hamburguesería.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = [
+    {
+      dates: "15 – 21 sept", obj: "Cerrar la documentación de FASE B que faltaba y arrancar la búsqueda de proveedores.",
+      tasks: [
+        { t: "Terminar los documentos de FASE B que faltan (Limpieza, Control de Desperdicios)", who: "Diego + Claude", note: "Resuelto 20 sept: ambos documentos ya están en el proyecto" },
+        { t: "Definir el radio de cobertura de domicilios", who: "Diego", note: "Resuelto 20 sept: zona Pajarito–12 de Oct–Robledo–San Cristóbal–Éxito de Robledo" },
+        { t: "Definir el canal de recepción de pedidos", who: "Diego + hermano", note: "Resuelto 20 sept: WhatsApp ahora, web/PWA después" },
+        { t: "Contactar proveedores candidatos y pedir cotización", who: "Diego", note: "Priorizar Plaza Minorista o Placita de Flores para perecederos (centraliza + domicilio propio)" },
+        { t: "Definir monto del fondo de cambio y de la caja menor", who: "Diego", note: "Resuelto 20 sept: $150.000 y $130.000" }
+      ]
+    },
+    {
+      dates: "22 – 28 sept", obj: "Cerrar proveedores definitivos y las cifras del Excel que dependían de ellos.",
+      tasks: [
+        { t: "Elegir proveedor definitivo por insumo (precio, frecuencia, unidad de compra)", who: "Diego" },
+        { t: "Confirmar factor de conversión de tomate y lechuga a unidad de compra", who: "Diego", note: "Actualiza Compras Mensuales" },
+        { t: "Definir receta real de las salsas (BBQ, dulce)", who: "Diego", note: "Cierra el Food Cost con precisión" },
+        { t: "Confirmar requisitos sanitarios/legales de manipulación de alimentos", who: "Diego" },
+        { t: "Actualizar Excel (Food Cost, Compras Mensuales) con las cifras confirmadas", who: "Claude" },
+        { t: "Definir quién construye la web/PWA y el alcance inicial", who: "Diego", note: "Deseable antes de abrir, no bloqueante" }
+      ]
+    },
+    {
+      dates: "29 sept – 5 oct", obj: "Comprar los activos que faltan y dejar el local operativo.",
+      tasks: [
+        { t: "Comprar la moto para domicilios", who: "Diego" },
+        { t: "Revisar plancha, quemadores, nevera y parrilla de domicilios", who: "Diego" },
+        { t: "Comprar el inventario inicial ($500.000)", who: "Diego", note: "No es el consumo de un mes" },
+        { t: "Confirmar concepto y calendario de la campaña de marketing de apertura", who: "Diego + hermano" }
+      ]
+    },
+    {
+      dates: "6 – 12 oct", obj: "Primera prueba real de producción y arranque de la campaña.",
+      tasks: [
+        { t: "Primera prueba de producción: preparar recetas base y armar las tres hamburguesas", who: "Diego", note: "Llena los [a definir] de Procedimientos de Producción" },
+        { t: "Medir tiempo de preparación de cada hamburguesa", who: "Diego" },
+        { t: "Ajustar Food Cost y Excel si la receta real difiere de la estimada", who: "Claude" },
+        { t: "Arrancar la campaña de marketing de apertura", who: "Hermano de Diego" }
+      ]
+    },
+    {
+      dates: "13 – 19 oct", obj: "Ajustar con lo aprendido y probar el ciclo completo a pequeña escala.",
+      tasks: [
+        { t: "Ajustar procesos según la primera prueba (porciones, orden de ensamblaje, higiene)", who: "Diego" },
+        { t: "Prueba de trayecto real de la moto en la zona de cobertura", who: "Diego" },
+        { t: "Simulación pequeña de servicio (familia/amigos): mostrador + un domicilio de prueba", who: "Diego" },
+        { t: "Confirmar tiempo objetivo de domicilio y de mostrador", who: "Diego" }
+      ]
+    },
+    {
+      dates: "20 – 26 oct", obj: "Simulación de servicio completa y últimos ajustes operativos.",
+      tasks: [
+        { t: "Simulación de servicio completa: un día tipo, mostrador + domicilios al tiempo", who: "Diego + equipo", note: "Apertura y cierre completos" },
+        { t: "Ensayar el manejo de caja durante un turno completo", who: "Diego" },
+        { t: "Definir política de compensación por error y umbral de diferencias de caja", who: "Diego" },
+        { t: "Intensificar campaña de marketing (recordatorio + promoción del primer día)", who: "Hermano de Diego" },
+        { t: "Confirmar personal de apertura y turnos", who: "Diego" }
+      ]
+    },
+    {
+      dates: "27 oct – 1 nov", obj: "Últimos preparativos y apertura.",
+      tasks: [
+        { t: "Compra de inventario para los primeros días", who: "Diego", note: "29–31 oct · perecederos, cerca a la fecha" },
+        { t: "Ensayo final del protocolo de apertura y cierre completo", who: "Diego", note: "30–31 oct" },
+        { t: "Confirmar moto con gasolina, casco y elementos de seguridad", who: "Diego", note: "31 oct" },
+        { t: "Confirmar fondo de cambio y caja menor listos", who: "Diego", note: "31 oct" },
+        { t: "Apertura de Pixel Burger", who: "Diego + equipo", note: "Dom. 1 nov" }
+      ]
+    }
+  ];
+
+  var STORAGE_KEY = "pixelburger-cronograma-v1";
+  var state = {};
+  try {
+    state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var weeksEl = document.getElementById("weeks");
+  var trackEl = document.getElementById("track");
+  var daysLeftEl = document.getElementById("days-left");
+  var tasksDoneEl = document.getElementById("tasks-done");
+
+  var totalTasks = 0;
+  DATA.forEach(function (w) { totalTasks += w.tasks.length; });
+
+  function taskKey(wi, ti) { return wi + "-" + ti; }
+
+  function ringSvg(pct) {
+    var r = 12, c = 2 * Math.PI * r;
+    var off = c - (pct / 100) * c;
+    return '<svg class="wk-ring" viewBox="0 0 30 30">' +
+      '<circle class="bg" cx="15" cy="15" r="' + r + '" fill="none" stroke-width="3"></circle>' +
+      '<circle class="fg" cx="15" cy="15" r="' + r + '" fill="none" stroke-width="3" ' +
+      'stroke-linecap="round" transform="rotate(-90 15 15)" ' +
+      'stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"></circle>' +
+      '</svg>';
+  }
+
+  function weekDoneCount(wi) {
+    var n = 0;
+    DATA[wi].tasks.forEach(function (_, ti) { if (state[taskKey(wi, ti)]) n++; });
+    return n;
+  }
+
+  function render() {
+    weeksEl.innerHTML = "";
+    trackEl.innerHTML = "";
+    var doneTotal = 0;
+
+    DATA.forEach(function (w, wi) {
+      var done = weekDoneCount(wi);
+      doneTotal += done;
+      var pct = Math.round((done / w.tasks.length) * 100);
+
+      var cell = document.createElement("div");
+      cell.className = "cell" + (wi === DATA.length - 1 ? " opening" : "");
+      cell.innerHTML = '<div class="fill" style="width:' + pct + '%"></div>';
+      trackEl.appendChild(cell);
+
+      var card = document.createElement("div");
+      card.className = "week" + (wi === DATA.length - 1 ? " opening-week" : "");
+      if (state["open-" + wi]) card.classList.add("open");
+
+      var head = document.createElement("button");
+      head.className = "week-head";
+      head.setAttribute("aria-expanded", card.classList.contains("open") ? "true" : "false");
+      head.innerHTML =
+        '<span class="wk-index">SEM ' + (wi + 1) + '</span>' +
+        '<span class="wk-titles"><span class="wk-dates">' + w.dates + '</span>' +
+        '<div class="wk-obj">' + w.obj + '</div></span>' +
+        '<span class="wk-progress-wrap">' + ringSvg(pct) + '<span>' + done + '/' + w.tasks.length + '</span></span>' +
+        '<svg class="chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+      head.addEventListener("click", function () {
+        card.classList.toggle("open");
+        var isOpen = card.classList.contains("open");
+        head.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        state["open-" + wi] = isOpen;
+        save();
+      });
+
+      var body = document.createElement("div");
+      body.className = "week-body";
+      var list = document.createElement("div");
+      list.className = "task-list";
+
+      w.tasks.forEach(function (task, ti) {
+        var key = taskKey(wi, ti);
+        var row = document.createElement("label");
+        row.className = "task" + (state[key] ? " done" : "");
+        var metaBits = '<span class="who">' + task.who + '</span>';
+        if (task.note) metaBits += '<span class="when">' + task.note + '</span>';
+        row.innerHTML =
+          '<input type="checkbox" ' + (state[key] ? "checked" : "") + ' aria-label="' + task.t.replace(/"/g, "&quot;") + '">' +
+          '<span class="task-text"><span class="t-main">' + task.t + '</span>' +
+          '<div class="t-meta">' + metaBits + '</div></span>';
+
+        var box = row.querySelector("input");
+        box.addEventListener("change", function () {
+          state[key] = box.checked;
+          save();
+          render();
+        });
+        list.appendChild(row);
+      });
+
+      body.appendChild(list);
+      card.appendChild(head);
+      card.appendChild(body);
+      weeksEl.appendChild(card);
+    });
+
+    tasksDoneEl.textContent = doneTotal + "/" + totalTasks;
+
+    var today = new Date();
+    var opening = new Date(2026, 10, 1);
+    var msPerDay = 24 * 60 * 60 * 1000;
+    var diff = Math.ceil((opening - today) / msPerDay);
+    daysLeftEl.textContent = diff > 0 ? diff : (diff === 0 ? "¡Hoy!" : "Abierto");
+  }
+
+  render();
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,7 @@
+# Archivos temporales de Office y del sistema
+~$*
+.~lock.*
+Thumbs.db
+desktop.ini
+.DS_Store
+__pycache__/
