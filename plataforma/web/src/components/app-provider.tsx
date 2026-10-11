@@ -6,7 +6,7 @@ import { errorCode } from "@/lib/errors";
 import type { PublicConfig, Summary } from "@/lib/types";
 
 type Toast = { id: number; text: string; kind: "ok" | "error" | "xp" };
-type ProfileState = "loading" | "anon" | "incomplete" | "ready";
+type ProfileState = "loading" | "anon" | "incomplete" | "ready" | "offline";
 
 type Ctx = {
   user: User | null;
@@ -41,17 +41,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     const sb = supabase();
-    const { data: { user: u } } = await sb.auth.getUser();
-    setUser(u);
-    if (!u) { setSummary(null); setState("anon"); return; }
-    const { data, error } = await sb.rpc("my_summary");
-    if (error) {
-      if (errorCode(error) === "PERFIL_INCOMPLETO") { setSummary(null); setState("incomplete"); return; }
-      setState("ready"); // error de red: se mantiene lo último que había
-      return;
+    try {
+      // getSession lee la sesión guardada sin ir a la red; la autorización real la hace la base de datos.
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { setUser(null); setSummary(null); setState("anon"); return; }
+      setUser(session.user);
+      const { data, error } = await sb.rpc("my_summary");
+      if (error) {
+        if (errorCode(error) === "PERFIL_INCOMPLETO") { setSummary(null); setState("incomplete"); return; }
+        if (errorCode(error) === "NO_AUTENTICADO") { setSummary(null); setState("anon"); return; }
+        setState((s) => (s === "ready" ? "ready" : "offline"));
+        return;
+      }
+      setSummary(data as Summary);
+      setState("ready");
+    } catch {
+      setState((s) => (s === "ready" ? "ready" : "offline"));
     }
-    setSummary(data as Summary);
-    setState("ready");
   }, []);
 
   useEffect(() => {
@@ -90,6 +96,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={value}>
+      {state === "offline" && (
+        <div role="alert" className="mx-auto mt-3 flex w-[calc(100%-2rem)] max-w-lg items-center justify-between gap-3 rounded-lg border-2 border-danger bg-cabinet px-4 py-3 text-sm">
+          <span>No pudimos conectar con Pixel Burger. Revisa tu internet.</span>
+          <button className="font-bold text-cheese underline" onClick={() => { setState("loading"); refresh(); }}>Reintentar</button>
+        </div>
+      )}
       {children}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4">
         {toasts.map((t) => (

@@ -110,7 +110,7 @@ export default function JugarPage() {
         )}
         {gstate === "idle" && fichas === 0 && !banner && (
           <div className="absolute inset-x-6 top-1/3 rounded-xl border-2 border-cheese bg-night/95 p-4 text-center text-sm">
-            Cada pedido te da 1 ficha. <LinkButton href="/menu" className="mt-3 w-full">Pedir ahora</LinkButton>
+            Cada pedido te da 1 ficha. <LinkButton href="/" className="mt-3 w-full">Pedir ahora</LinkButton>
           </div>
         )}
       </div>

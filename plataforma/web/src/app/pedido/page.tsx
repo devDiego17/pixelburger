@@ -7,14 +7,14 @@ import { friendlyError } from "@/lib/errors";
 import { useApp } from "@/components/app-provider";
 import { Button, Card, Field, LinkButton, PageTitle, Spinner, inputClass } from "@/components/ui";
 import { PAYMENT_LABEL, cop } from "@/lib/format";
-import type { MenuItem } from "@/lib/types";
+import { useMenu } from "@/components/menu-list";
 
 type Payment = "cash" | "transfer" | "card_on_delivery";
 
 export default function PedidoPage() {
   const router = useRouter();
   const { state, summary, cart, setQty, clearCart, config, toast } = useApp();
-  const [items, setItems] = useState<MenuItem[] | null>(null);
+  const items = useMenu();
   const [mode, setMode] = useState<"delivery" | "pickup">("delivery");
   const [barrio, setBarrio] = useState("");
   const [address, setAddress] = useState("");
@@ -25,22 +25,19 @@ export default function PedidoPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    supabase().from("menu_items").select("*").eq("active", true).order("sort").then(({ data }) => setItems((data as MenuItem[]) ?? []));
-  }, []);
   useEffect(() => { if (summary?.barrio && !barrio) setBarrio(summary.barrio); }, [summary, barrio]);
 
-  const lines = useMemo(() => (items ?? []).filter((i) => cart[i.slug]).map((i) => ({ ...i, qty: cart[i.slug] })), [items, cart]);
+  const lines = useMemo(() => items.filter((i) => cart[i.slug]).map((i) => ({ ...i, qty: cart[i.slug] })), [items, cart]);
   const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
   const zone = config?.zones.find((z) => z.barrio === barrio);
   const fee = mode === "delivery" ? zone?.fee ?? 0 : 0;
   const total = subtotal + fee;
 
-  if (!items || state === "loading") return <Spinner />;
+  if (state === "loading") return <Spinner />;
   if (lines.length === 0) return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
       <p className="text-lg">Tu pedido está vacío.</p>
-      <LinkButton href="/menu">Ir al menú</LinkButton>
+      <LinkButton href="/">Ir al menú</LinkButton>
     </div>
   );
 
@@ -82,7 +79,7 @@ export default function PedidoPage() {
             </li>
           ))}
         </ul>
-        <Link href="/menu" className="mt-3 inline-block text-sm text-cheese underline">Agregar más</Link>
+        <Link href="/" className="mt-3 inline-block text-sm text-cheese underline">Agregar más</Link>
       </Card>
 
       <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Cómo lo recibes">

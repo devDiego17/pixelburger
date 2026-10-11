@@ -17,9 +17,9 @@ insert into public.levels (level, name, min_xp, reward) values
 on conflict (level) do nothing;
 
 insert into public.menu_items (slug, name, description, price, is_burger, sort) values
-  ('clasica', 'Clásica', 'Carne de la casa, queso, cebolla caramelizada, tomate, lechuga y BBQ.', 22100, true, 1),
-  ('montanera', 'Montañera', 'Carne de la casa, chorizo santarrosano, hogao, queso y cilantro.', 29100, true, 2),
-  ('cheese', 'Cheese', 'Doble queso: cheddar, queso crema y salsa cheddar sobre la carne de la casa.', 31900, true, 3)
+  ('clasica', 'Clásica', 'Carne de la casa, queso, cebolla caramelizada, tomate, lechuga y salsas BBQ y dulce.', 22100, true, 1),
+  ('montanera', 'Montañera', 'Carne de la casa, chorizo santarrosano, hogao, queso, cilantro, tomate, lechuga y salsas de la casa.', 29100, true, 2),
+  ('cheese', 'Cheese', 'Carne de la casa, doble cheddar, queso crema, salsa cheddar, cebolla caramelizada, tomate y lechuga.', 31900, true, 3)
 on conflict (slug) do nothing;
 
 -- Barrios del radio de domicilios (VERIFICAR con el mapa RangoDeDomicilios.png y ajustar el costo del domicilio)

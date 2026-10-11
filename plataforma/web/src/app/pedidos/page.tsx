@@ -46,7 +46,7 @@ export default function PedidosPage() {
   return (
     <div className="flex flex-col gap-4 py-2">
       <PageTitle>MIS PEDIDOS</PageTitle>
-      {orders.length === 0 && (<Card><p className="mb-3">Todavía no has pedido nada.</p><LinkButton href="/menu" className="w-full">Ver el menú</LinkButton></Card>)}
+      {orders.length === 0 && (<Card><p className="mb-3">Todavía no has pedido nada.</p><LinkButton href="/" className="w-full">Ver el menú</LinkButton></Card>)}
       {orders.map((o) => {
         const steps = STEPS[o.fulfillment];
         const idx = steps.indexOf(o.status as never);
