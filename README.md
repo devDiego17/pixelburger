@@ -34,3 +34,29 @@ Estos enlaces son privados: solo los ve quien tenga acceso en Claude.
 - Pendiente medir en la prueba de producción: loncha de queso, hojas por lechuga, porción de cebolla caramelizada, merma de cocción.
 - Capital inicial corregido: ≈ $4.273.000 + revisión de la moto + equipos pequeños (la moto fue un aporte del socio).
 - La garra da XP (no hamburguesas); lanzamiento sugerido en una tablet del mostrador.
+
+## Cómo trabajamos con ramas (Git Flow)
+
+| Rama | Para qué | Quién escribe |
+|---|---|---|
+| `main` | Lo que está en producción (lo que ven los clientes). | Nadie directo: solo se fusiona desde `develop` o un `hotfix/*`. |
+| `develop` | Integración: lo que ya funciona y va para la próxima versión. | Se fusiona desde las ramas de cada socio. |
+| `feature/diego` | Trabajo en curso de Diego. | Diego |
+| `feature/juan` | Trabajo en curso de Juan. | Juan |
+
+Para tareas grandes se puede abrir una rama por tarea, por ejemplo `feature/juan-papas`, siempre saliendo de `develop`.
+
+**Día a día**
+
+```bash
+git checkout feature/juan          # tu rama
+git pull origin develop            # trae lo último que integró el equipo
+# ... trabajas y haces commits ...
+git push origin feature/juan
+```
+
+Cuando algo está listo, se abre un Pull Request de `feature/juan` → `develop` en GitHub y el otro socio lo revisa.
+
+**Sacar una versión:** Pull Request de `develop` → `main` y una etiqueta (`git tag v1.0.0`).
+
+**Arreglo urgente en producción:** rama `hotfix/descripcion` desde `main`, se fusiona a `main` y también a `develop`.
