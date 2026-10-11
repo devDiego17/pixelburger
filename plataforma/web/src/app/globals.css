@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Pixel Burger: un solo look oscuro tipo cabina arcade, a propósito. */
+@theme {
+  --color-night: #15131f;
+  --color-cabinet: #221e33;
+  --color-panel: #2c2742;
+  --color-line: #3a3450;
+  --color-paper: #f5f1e8;
+  --color-muted: #b9b3c9;
+  --color-magenta: #ff4f8b;
+  --color-cheese: #ffc83d;
+  --color-lettuce: #5bc25b;
+  --color-danger: #ff6b6e;
+  --font-display: var(--font-silkscreen), "Courier New", monospace;
+  --font-body: var(--font-rubik), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-night);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-cheese);
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.pixel-shadow {
+  box-shadow: 4px 4px 0 0 #0b0a12;
+}
+
+.grid-bg {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
